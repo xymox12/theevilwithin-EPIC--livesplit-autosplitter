@@ -1,7 +1,9 @@
 state("EvilWithin")
 {
     int chapterNumber: 0x225DCE8;
-    int inGameTime:   0x02258E00, 0x68, 0x28, 0x8D8C;
+    int inGameTime: 0x02258E00, 0x68, 0x28, 0x8D8C;
+    //int isPaused: 0x1D42490, 0x2C; // 2 while paused, 1 in game
+    //int inGame: 0x89EF698; // 0 == game; 2 == main menu/loading screen, 3 == choice(?) screens
 }
 
 startup
