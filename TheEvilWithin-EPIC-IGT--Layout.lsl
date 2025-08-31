@@ -141,7 +141,7 @@
       <Path>LiveSplit.ScriptableAutoSplit.dll</Path>
       <Settings>
         <Version>1.5</Version>
-        <ScriptPath>D:\temp\evil_within\LiveSplit_1.8.33\Components\EvilWithinIGT_xymox12_v2.asl</ScriptPath>
+        <ScriptPath></ScriptPath>
         <Start>True</Start>
         <Reset>True</Reset>
         <Split>True</Split>
