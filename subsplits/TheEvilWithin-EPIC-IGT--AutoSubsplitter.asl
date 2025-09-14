@@ -81,7 +81,7 @@ split
 
 gameTime
 {
-    // Minimal stabilization: ignore zero/backwards/absurd; keep last good seconds.
+    // Minimal stabilization: ignore zero
     var t = current.inGameTime;
     int last = (int)vars.lastGoodSec;
 
