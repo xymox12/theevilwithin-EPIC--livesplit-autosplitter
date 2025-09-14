@@ -1,11 +1,4 @@
 // The Evil Within — IGT (seconds) + Chapter + Subsplit autosplitter
-// Fix v3 (per user request):
-// - Only use `current` and `old`; remove prevSub storage entirely.
-// - Treat EXACTLY these as "first-of-next-chapter" markers:
-//     * "player_start"
-//     * "st06_asylummain_player_start_chapter4_division"
-// - Split early on subsection flip to a marker while chapterNumber is unchanged.
-// - Suppress duplicate split when chapterNumber increments on the score screen.
 
 state("EvilWithin")
 {
@@ -35,7 +28,8 @@ startup
 
 init
 {
-    vars.suppressedNextChapterInc = false;
+    // Minimal IGT stabilization vars
+    vars.lastGoodSec = 0;
 }
 
 // Start the timer when we first see IGT begin or on the very first valid subsection.
@@ -64,31 +58,44 @@ split
     // Case A: normal subsplits within the same chapter (any non-marker subsection change)
     bool doSubSplit = subChanged && !isFirstOfNext && (current.chapterNumber == old.chapterNumber);
 
-    // Case B: chapter end detected early via subsection jump to next-chapter marker
-    bool doChapterSplitEarly = subChanged && isFirstOfNext && (current.chapterNumber == old.chapterNumber);
+    // Case B: special “early split” if subsection changed to a marker but chapterNumber has not yet incremented
+    bool doEarlySplit = isFirstOfNext && (current.chapterNumber == old.chapterNumber);
 
-    // Case C: when the score screen bumps chapterNumber by +1,
-    // suppress a second split if we already split early in Case B.
-    bool chapterNumberIncreased = current.chapterNumber > old.chapterNumber;
-    bool doChapterSplitLate = chapterNumberIncreased && !vars.suppressedNextChapterInc;
+    // Case C: chapter increment detected; suppress if we just did an early split
+    bool doChapterSplit = (current.chapterNumber > old.chapterNumber) && !vars.suppressedNextChapterInc;
 
-    // Bookkeeping for suppression flag
-    if (doChapterSplitEarly)
+    if (doEarlySplit)
+    {
         vars.suppressedNextChapterInc = true;
-    else if (chapterNumberIncreased)
-        vars.suppressedNextChapterInc = false; // clear after the bump
+        return true;
+    }
 
-    return doSubSplit || doChapterSplitEarly || doChapterSplitLate;
-}
+    if (doChapterSplit)
+    {
+        vars.suppressedNextChapterInc = false;
+        return true;
+    }
 
-isLoading
-{
-    // Drive timing purely by IGT below; keep loads ignored.
-    return true;
+    return doSubSplit;
 }
 
 gameTime
 {
-    if (current.inGameTime >= 0)
-        return TimeSpan.FromSeconds(current.inGameTime);
+    // Minimal stabilization: ignore zero/backwards/absurd; keep last good seconds.
+    var t = current.inGameTime;
+    int last = (int)vars.lastGoodSec;
+
+    if (t > 0)
+    {
+        vars.lastGoodSec = t;
+        last = t;
+    }
+
+    return TimeSpan.FromSeconds(last);
+}
+
+// Do NOT pause — we just want a clean, monotonic IGT on the main timer.
+isLoading
+{
+    return false;
 }
